@@ -301,7 +301,6 @@ class Stm32bl():
         self._send_command(self.CMD_READOUT_PROTECT, 0)
         self.log("Set readout protection, device is restarted", level=1)
         self._connect(5)
-        # self._cmd_get()
 
     def cmd_readout_unprotect(self):
         """Disables the read protection"""
@@ -309,7 +308,6 @@ class Stm32bl():
         self._send_command(self.CMD_READOUT_UNPROTECT, 0)
         self.log("Removed readout protection, device is restarted", level=1)
         self._connect(5)
-        # self._cmd_get()
 
     def read_memory(self, address, size=None):
         """read memory"""
@@ -423,7 +421,6 @@ def main():
     size = int(args.size, 0) if args.size is not None else None
 
     try:
-        # stm32bl = Stm32bl(port='/dev/tty.SLAB_USBtoUART', verbosity=args.verbose)
         stm32bl = Stm32bl(port=args.port, baudrate=args.baud, verbosity=args.verbose)
         if args.read_unprotect:
             stm32bl.cmd_readout_unprotect()
