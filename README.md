@@ -1,9 +1,9 @@
-# Stm32bl
+# STM32BL
 STM32 MCU serial firmware loader.
 
 ## requirements
 - python - tested only with python3.x
-- pyserial - python library for serial port handling
+- py-serial - python library for serial port handling
 
 ## supported MCUs
 Probably all STM32xxxx
@@ -22,3 +22,6 @@ please report any problems
     stm32loader -p /dev/tty.SLAB_USBtoUART -m -w file.bin -f -x
 - help
     stm32loader -h
+
+## Know issues
+- RTS and DTR for controlling BOOT and RESET is not supported, now is necessary to manually switch MCU to this mode. This feature will be included in next releases.
