@@ -27,6 +27,3 @@ please report any problems
 
 - help
   `stm32loader -h`
-
-## Know issues
-- RTS and DTR for controlling BOOT and RESET is not supported, now is necessary to manually switch MCU to this mode. This feature will be included in next releases.

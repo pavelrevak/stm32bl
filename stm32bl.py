@@ -1,5 +1,6 @@
 """STM32 MCU serial firmware loader"""
 
+import time
 import argparse
 import serial
 
@@ -63,7 +64,7 @@ class Stm32bl():
 
     def __init__(self, port, baudrate=19200, verbosity=1):
         try:
-            self.serial_port = serial.Serial(
+            self._serial_port = serial.Serial(
                 port=port,
                 baudrate=baudrate,
                 parity=serial.PARITY_EVEN,
@@ -116,20 +117,29 @@ class Stm32bl():
     def _write(self, data):
         """Write data to serial port"""
         self.log(":".join(['%02x' % d for d in data]), 'WR', level=3)
-        self.serial_port.write(bytes(data))
+        self._serial_port.write(bytes(data))
 
     def _read(self, cnt=1, timeout=1):
         """Read data from serial port"""
         data = []
         while not data and timeout > 0:
-            data = list(self.serial_port.read(cnt))
+            data = list(self._serial_port.read(cnt))
             timeout -= 1
         self.log(":".join(['%02x' % d for d in data]), 'RD', level=3)
         return data
 
+    def _reset_mcu(self):
+        """Reset MCU"""
+        self._serial_port.setDTR(0)
+        time.sleep(0.1)
+        self._serial_port.setDTR(1)
+        time.sleep(0.2)
+
     def _connect(self, repeat=1):
         """connect to boot-loader"""
         self.log("Connecting to boot-loader", level=1)
+        self._serial_port.setRTS(0)
+        self._reset_mcu()
         while repeat:
             self._write([self.CMD_INIT])
             ret = self._read()
@@ -137,6 +147,11 @@ class Stm32bl():
                 return
             repeat -= 1
         raise ConnectingException("Can't connect to MCU boot-loader.")
+
+    def exit_bootloader(self):
+        """Exit boot-loader and restart MCU"""
+        self._serial_port.setRTS(1)
+        self._reset_mcu()
 
     def _talk(self, data_wr, cnt_rd, timeout=1):
         """talk with boot-loader"""
@@ -318,6 +333,7 @@ class Stm32bl():
                 try:
                     mem += self._cmd_read_memory(address, 256)
                 except NoAckDataException:
+                    self._read()
                     break
                 address += 256
             self.log("done (%d Bytes)" % len(mem), 'READ_MEMORY', level=1)
@@ -412,6 +428,7 @@ def main():
     parser.add_argument('-w', '--write', action='append', help="Write file to memory *")
     parser.add_argument('-f', '--verify', action='store_true', help="Verify after writing")
     parser.add_argument('-x', '--execute', action='store_true', help="Start application")
+    parser.add_argument('-t', '--reset', action='store_true', help="Reset MCU and exit boot-loader")
     parser.add_argument('-W', '--write-protect', type=int, action='append', help="WP sector *")
     parser.add_argument('-U', '--write-unprotect', action='store_true', help="Write unprotect all")
     parser.add_argument('-R', '--read-protect', action='store_true', help="Read Protect")
@@ -444,7 +461,9 @@ def main():
         if args.read_protect:
             stm32bl.cmd_readout_protect()
         if args.execute:
-            stm32bl.cmd_go(Stm32bl.FLASH_START)
+            stm32bl.cmd_go(address)
+        if args.reset:
+            stm32bl.exit_bootloader()
     except Stm32BLException as err:
         print("ERROR: %s" % err)
 
