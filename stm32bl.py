@@ -446,7 +446,7 @@ def main():
         if args.dump or args.read:
             mem = stm32bl.read_memory(address, size)
             if args.dump:
-                stm32bl.print_buffer(Stm32bl.FLASH_START, mem)
+                stm32bl.print_buffer(address, mem)
             if args.read:
                 binfile = open(args.read, 'wb')
                 binfile.write(bytes(mem))
