@@ -278,7 +278,7 @@ class Stm32bl():
             for page in pages:
                 data.append(page)
         else:
-            data = [pages]
+            data = pages
         self._send_data(data, timeout=20)
 
     def _cmd_extended_erase(self, pages=0xffff):
